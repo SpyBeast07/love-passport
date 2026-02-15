@@ -22,4 +22,8 @@ export default defineSchema({
     note: v.optional(v.string()),
     redeemedAt: v.number(),
   }),
+
+  users: defineTable({
+    email: v.string(),
+  }).index("by_email", ["email"]),
 });

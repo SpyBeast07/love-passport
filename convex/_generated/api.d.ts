@@ -11,6 +11,7 @@
 import type * as couples from "../couples.js";
 import type * as stamps from "../stamps.js";
 import type * as test from "../test.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -22,6 +23,7 @@ declare const fullApi: ApiFromModules<{
   couples: typeof couples;
   stamps: typeof stamps;
   test: typeof test;
+  users: typeof users;
 }>;
 
 /**

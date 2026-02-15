@@ -53,15 +53,41 @@ export const listTemplates = query({
 /**
  * Redeem a stamp for a couple
  */
+/**
+ * Redeem a stamp for a couple
+ */
 export const redeemStamp = mutation({
   args: {
+    userId: v.id("users"),
     stampId: v.id("stampTemplates"),
     storageId: v.optional(v.id("_storage")),
   },
 
   handler: async (ctx, args) => {
-    const couple = await ctx.db.query("couples").first();
-    if (!couple) throw new Error("No couple exists");
+    // Find the user's couple
+    let couple = await ctx.db
+      .query("couples")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("user1Id"), args.userId),
+          q.eq(q.field("user2Id"), args.userId)
+        )
+      )
+      .first();
+
+    // If no couple, create one automatically
+    if (!couple) {
+      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const coupleId = await ctx.db.insert("couples", {
+        user1Id: args.userId,
+        user2Id: args.userId,
+        inviteCode,
+      });
+      // Fetch the newly created couple object to get _id securely
+      const newCouple = await ctx.db.get(coupleId);
+      if (!newCouple) throw new Error("Failed to create couple");
+      couple = newCouple;
+    }
 
     await ctx.db.insert("redeemedStamps", {
       coupleId: couple._id,
@@ -76,8 +102,20 @@ export const redeemStamp = mutation({
  * Get redeemed stamps for a couple
  */
 export const listRedeemed = query({
-  handler: async (ctx) => {
-    const couple = await ctx.db.query("couples").first();
+  args: { userId: v.id("users") },
+
+  handler: async (ctx, args) => {
+    // Find user's couple
+    const couple = await ctx.db
+      .query("couples")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("user1Id"), args.userId),
+          q.eq(q.field("user2Id"), args.userId)
+        )
+      )
+      .first();
+
     if (!couple) return [];
 
     const redeemed = await ctx.db
@@ -90,6 +128,7 @@ export const listRedeemed = query({
 
     for (const r of redeemed) {
       const stamp = await ctx.db.get(r.stampId);
+
       if (stamp) {
         const imageUrl = r.storageId
           ? await ctx.storage.getUrl(r.storageId)
