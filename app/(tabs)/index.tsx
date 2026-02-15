@@ -1,98 +1,112 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useMutation, useQuery } from "convex/react";
+import * as ImagePicker from "expo-image-picker";
+import { useState } from "react";
+import { Button, Image, ScrollView, Text, View } from "react-native";
+import { api } from "../../convex/_generated/api";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function Home() {
+  const stamps = useQuery(api.stamps.listTemplates);
+  const redeemed = useQuery(api.stamps.listRedeemed);
+  const redeem = useMutation(api.stamps.redeemStamp);
+  const seed = useMutation(api.stamps.seedStamps);
 
-export default function HomeScreen() {
+  const generateUploadUrl = useMutation(api.stamps.generateUploadUrl);
+
+  // Store image per stamp ID
+  const [images, setImages] = useState<Record<string, string>>({});
+
+  const pickImage = async (stampId: string) => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setImages((prev) => ({
+        ...prev,
+        [stampId]: result.assets[0].uri,
+      }));
+    }
+  };
+
+  const uploadImage = async (uri: string) => {
+    const uploadUrl = await generateUploadUrl();
+
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    const result = await fetch(uploadUrl, {
+      method: "POST",
+      body: blob,
+      headers: { "Content-Type": blob.type },
+    });
+
+    const json = await result.json();
+    return json.storageId;
+  };
+
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
+      <Button title="Seed Database" onPress={() => seed()} />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Text style={{ fontSize: 18, marginTop: 20 }}>Available Stamps:</Text>
+
+      {stamps?.map((stamp) => (
+        <View key={stamp._id} style={{ marginTop: 15 }}>
+          <Text>
+            {stamp.icon} {stamp.title}
+          </Text>
+
+          <Button
+            title="Pick Memory Photo"
+            onPress={() => pickImage(stamp._id)}
+          />
+
+          {images[stamp._id] && (
+            <Image
+              source={{ uri: images[stamp._id] }}
+              style={{ width: 80, height: 80, marginVertical: 5 }}
+            />
+          )}
+
+          <Button
+            title="Redeem"
+            onPress={async () => {
+              let storageId;
+
+              if (images[stamp._id]) {
+                storageId = await uploadImage(images[stamp._id]);
+              }
+
+              await redeem({
+                stampId: stamp._id,
+                storageId,
+              });
+            }}
+          />
+        </View>
+      ))}
+
+      <Text style={{ fontSize: 18, marginTop: 30 }}>My Passport:</Text>
+
+      {redeemed?.map((r) => (
+        <View key={r._id} style={{ marginTop: 10 }}>
+          <Text>
+            {r.icon} {r.title} — {r.country}
+          </Text>
+          <Text>
+            Redeemed at: {new Date(r.redeemedAt).toLocaleString()}
+          </Text>
+
+          {r.imageUrl && (
+            <Image
+              source={{ uri: r.imageUrl }}
+              style={{ width: 120, height: 120, marginTop: 5 }}
+            />
+          )}
+        </View>
+      ))}
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});

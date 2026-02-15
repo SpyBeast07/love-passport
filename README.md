@@ -1,50 +1,57 @@
-# Welcome to your Expo app 👋
+# Love Passport ❤️
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A digital passport for couples to collect memories, redeem stamps, and share moments.
 
-## Get started
+## Features
+- **Couple Bonding**: Create a couple profile or join your partner.
+- **Digital Stamps**: Collect and redeem stamps for completing couple activities (e.g., "Honmei Chocolate Night").
+- **Memory Storage**: Upload photos for each stamp to keep your memories safe.
+- **Real-time Updates**: Powered by Convex for instant data syncing.
 
-1. Install dependencies
+## Tech Stack
+- **Frontend**: React Native (Expo)
+- **Backend**: Convex
+- **Language**: TypeScript
 
-   ```bash
-   npm install
-   ```
+## Prerequisites
+- Node.js (v18 or later recommended)
+- npm or yarn
 
-2. Start the app
+## Getting Started
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Clone the repository
 ```bash
-npm run reset-project
+git clone https://github.com/SpyBeast07/love-passport.git
+cd love-passport
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-## Learn more
+### 3. Start the Backend (Convex)
+Open a terminal and run:
+```bash
+npx convex dev
+```
+This will set up your backend, provision a database, and generate necessary types.  
+*Note: You may need to log in to Convex if this is your first time.*
 
-To learn more about developing your project with Expo, look at the following resources:
+### 4. Start the Frontend (Expo)
+Open a **new** terminal window (keep the backend running) and run:
+```bash
+npx expo start
+```
+- Press `i` to run on an iOS simulator.
+- Press `a` to run on an Android emulator.
+- Scan the QR code with the Expo Go app on your physical device.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Project Structure
+- `convex/`: Backend functions (database queries, mutations, schema).
+- `app/`: Frontend screens and layout (Expo Router).
+- `components/`: Reusable UI components.
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Troubleshooting
+- **Build Errors**: If you encounter issues, try deleting `node_modules` and running `npm install` again.
+- **Convex Issues**: Ensure `npx convex dev` is running and showing "Convex functions ready".
