@@ -1,4 +1,6 @@
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { authClient } from "@/lib/auth-client";
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { ConvexReactClient } from "convex/react";
 import { Stack } from "expo-router";
 
 const convex = new ConvexReactClient(
@@ -7,8 +9,8 @@ const convex = new ConvexReactClient(
 
 export default function RootLayout() {
   return (
-    <ConvexProvider client={convex}>
+    <ConvexBetterAuthProvider client={convex} authClient={authClient}>
       <Stack screenOptions={{ headerShown: false }} />
-    </ConvexProvider>
+    </ConvexBetterAuthProvider>
   );
 }
