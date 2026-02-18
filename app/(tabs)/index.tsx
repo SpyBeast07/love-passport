@@ -1,29 +1,21 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { authClient } from "@/lib/auth-client";
 import { useMutation, useQuery } from "convex/react";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Image, ScrollView, Text, View } from "react-native";
 import { api } from "../../convex/_generated/api";
 
 export default function Home() {
     const router = useRouter();
-    const [email, setEmail] = useState<string | null>(null);
-
-    useEffect(() => {
-        AsyncStorage.getItem("userEmail").then(setEmail);
-    }, []);
-
-    const user = useQuery(
-        api.users.getUserByEmail,
-        email ? { email } : "skip"
-    );
+    const { data: session, isPending } = authClient.useSession();
+    const userId = session?.user?.id;
 
     const stamps = useQuery(api.stamps.listTemplates);
 
     const redeemed = useQuery(
         api.stamps.listRedeemed,
-        user ? { userId: user._id } : "skip"
+        session ? {} : "skip" // Use session existence check
     );
 
     const redeem = useMutation(api.stamps.redeemStamp);
@@ -66,11 +58,11 @@ export default function Home() {
 
 
     const logout = async () => {
-        await AsyncStorage.clear();
+        await authClient.signOut();
         router.replace("/(auth)");
     };
 
-    if (!user) {
+    if (isPending || !session) {
         return (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                 <Text>Loading profile...</Text>
@@ -84,6 +76,7 @@ export default function Home() {
                 <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Love Passport</Text>
                 <Button title="Logout" onPress={logout} color="red" />
             </View>
+            <Text style={{ marginBottom: 10 }}>Welcome, {session.user.name}</Text>
 
             <Button title="Seed Database" onPress={() => seed()} />
 
@@ -110,7 +103,7 @@ export default function Home() {
                     <Button
                         title="Redeem"
                         onPress={async () => {
-                            if (!user) return;
+                            if (!userId) return;
 
                             let storageId;
 
@@ -119,7 +112,6 @@ export default function Home() {
                             }
 
                             await redeem({
-                                userId: user._id,
                                 stampId: stamp._id,
                                 storageId,
                             });

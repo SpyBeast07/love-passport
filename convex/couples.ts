@@ -1,12 +1,12 @@
-import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
 
 /**
  * Create a new couple
  */
 export const createCouple = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.string(),
   },
 
   handler: async (ctx, args) => {
@@ -27,7 +27,7 @@ export const createCouple = mutation({
  */
 export const joinCouple = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.string(),
     inviteCode: v.string(),
   },
 
@@ -52,7 +52,7 @@ export const joinCouple = mutation({
  */
 export const getMyCouple = query({
   args: {
-    userId: v.id("users"),
+    userId: v.string(),
   },
 
   handler: async (ctx, args) => {

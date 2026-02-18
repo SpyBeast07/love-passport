@@ -29,6 +29,13 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
         },
         // Add additional plugins or providers here as needed
         plugins: [convex({ authConfig })],
+        trustedOrigins: ["http://localhost:8081"],
+        advanced: {
+            defaultCookieAttributes: {
+                sameSite: "None",
+                secure: true,
+            },
+        },
     } satisfies BetterAuthOptions;
 };
 

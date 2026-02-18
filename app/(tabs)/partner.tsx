@@ -1,40 +1,31 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { authClient } from "@/lib/auth-client";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { api } from "../../convex/_generated/api";
 
 export default function Partner() {
-    const [email, setEmail] = useState<string | null>(null);
+    const { data: session, isPending } = authClient.useSession();
+    const userId = session?.user?.id;
     const [inviteCode, setInviteCode] = useState("");
-
-    // Load current email
-    useEffect(() => {
-        AsyncStorage.getItem("userEmail").then(setEmail);
-    }, []);
-
-    const user = useQuery(
-        api.users.getUserByEmail,
-        email ? { email } : "skip"
-    );
 
     const couple = useQuery(
         api.couples.getMyCouple,
-        user ? { userId: user._id } : "skip"
+        userId ? { userId } : "skip"
     );
 
     const createCouple = useMutation(api.couples.createCouple);
     const joinCouple = useMutation(api.couples.joinCouple);
 
-    if (!email || user === undefined) {
+    if (isPending) {
         return (
             <View style={styles.container}>
-                <Text>Loading...</Text>
+                <Text>Loading session...</Text>
             </View>
         );
     }
 
-    if (user === null) {
+    if (!session || !userId) {
         return (
             <View style={styles.container}>
                 <Text>User not found. Please log out and back in.</Text>
@@ -61,7 +52,7 @@ export default function Partner() {
 
             <Button
                 title="Create Couple"
-                onPress={() => createCouple({ userId: user._id })}
+                onPress={() => createCouple({ userId })}
             />
 
             <Text style={{ marginTop: 30, marginBottom: 10, fontSize: 16 }}>Or Join with Code:</Text>
@@ -77,7 +68,7 @@ export default function Partner() {
                 title="Join Couple"
                 onPress={async () => {
                     try {
-                        await joinCouple({ userId: user._id, inviteCode });
+                        await joinCouple({ userId, inviteCode });
                         Alert.alert("Success", "You have joined the couple!");
                     } catch (error: any) {
                         Alert.alert("Error", error.message || "Failed to join couple");

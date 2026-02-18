@@ -3,8 +3,8 @@ import { v } from "convex/values";
 
 export default defineSchema({
   couples: defineTable({
-    user1Id: v.id("users"),
-    user2Id: v.id("users"),
+    user1Id: v.string(), // Better Auth User ID
+    user2Id: v.string(), // Better Auth User ID
     inviteCode: v.string(),
   }),
 
@@ -22,8 +22,4 @@ export default defineSchema({
     note: v.optional(v.string()),
     redeemedAt: v.number(),
   }),
-
-  users: defineTable({
-    email: v.string(),
-  }).index("by_email", ["email"]),
 });

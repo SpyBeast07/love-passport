@@ -58,19 +58,24 @@ export const listTemplates = query({
  */
 export const redeemStamp = mutation({
   args: {
-    userId: v.id("users"),
     stampId: v.id("stampTemplates"),
     storageId: v.optional(v.id("_storage")),
   },
 
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+    const userId = identity.subject;
+
     // Find the user's couple
     let couple = await ctx.db
       .query("couples")
       .filter((q) =>
         q.or(
-          q.eq(q.field("user1Id"), args.userId),
-          q.eq(q.field("user2Id"), args.userId)
+          q.eq(q.field("user1Id"), userId),
+          q.eq(q.field("user2Id"), userId)
         )
       )
       .first();
@@ -79,8 +84,8 @@ export const redeemStamp = mutation({
     if (!couple) {
       const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       const coupleId = await ctx.db.insert("couples", {
-        user1Id: args.userId,
-        user2Id: args.userId,
+        user1Id: userId,
+        user2Id: userId,
         inviteCode,
       });
       // Fetch the newly created couple object to get _id securely
@@ -102,16 +107,22 @@ export const redeemStamp = mutation({
  * Get redeemed stamps for a couple
  */
 export const listRedeemed = query({
-  args: { userId: v.id("users") },
+  args: {},
 
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+    const userId = identity.subject;
+
     // Find user's couple
     const couple = await ctx.db
       .query("couples")
       .filter((q) =>
         q.or(
-          q.eq(q.field("user1Id"), args.userId),
-          q.eq(q.field("user2Id"), args.userId)
+          q.eq(q.field("user1Id"), userId),
+          q.eq(q.field("user2Id"), userId)
         )
       )
       .first();
